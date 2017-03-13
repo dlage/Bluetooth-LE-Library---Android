@@ -31,6 +31,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -176,7 +177,8 @@ public class BluetoothLeService extends Service {
                 // parameter to false.
 
                 Log.d(TAG, "Trying to create a new connection.");
-                mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
+                mBluetoothGatt = device.connectGatt(this, true, mGattCallback);
+                //boolean v = refreshDeviceCache(mBluetoothGatt);
                 mBluetoothDeviceAddress = address;
                 setConnectionState(State.CONNECTING, true);
                 retVal = true;
@@ -184,6 +186,21 @@ public class BluetoothLeService extends Service {
         }
 
         return retVal;
+    }
+
+    private boolean refreshDeviceCache(BluetoothGatt gatt){
+        try {
+            BluetoothGatt localBluetoothGatt = gatt;
+            Method localMethod = localBluetoothGatt.getClass().getMethod("refresh", new Class[0]);
+            if (localMethod != null) {
+                boolean bool = ((Boolean) localMethod.invoke(localBluetoothGatt, new Object[0])).booleanValue();
+                return bool;
+            }
+        }
+        catch (Exception localException) {
+            Log.e(TAG, "An exception occured while refreshing device");
+        }
+        return false;
     }
 
     private synchronized void setConnectionState(final State newState, final boolean broadCast) {
